@@ -54,9 +54,34 @@ The separate two-line blessing from the printed invitation is also preserved, un
 
 Music is absent by default. Supply a licensed local audio asset and configure `optional.music`; playback starts only on a guest's explicit action. No autoplay. RSVP is disabled until a real HTTPS destination is provided. No form pretends to submit. Photos, children's messages, contacts and reception remain hidden unless configured. There is no authentication, payment, tracking, backend or storage of guest details.
 
-## Hosting
+## Hosting on Cloudflare Workers
 
-Deploy as a standard Next.js application on Vercel or any Node host: build with `npm run build`, run with `npm start`. No environment variables required. The page is prepared at `/invite/amritpal-akamdeep`; unknown slugs return 404. A future invitation registry can select a typed config by slug without changing scene components. This repository does not deploy hosting by itself.
+Cloudflare configuration is committed: `next.config.ts`, `open-next.config.ts`, and `wrangler.jsonc`. The Worker name is `wedding-card`. No interactive framework setup is needed.
+
+In **Cloudflare Dashboard → Workers & Pages → wedding-card → Settings → Build**, use:
+
+| Setting        | Value                      |
+| -------------- | -------------------------- |
+| Build command  | `npm run build:cloudflare` |
+| Deploy command | `npx wrangler deploy`      |
+| Root directory | repository root            |
+
+This builds Next.js and the OpenNext Worker once, then deploys the generated Worker and assets. Do not use only `npm run build` with `npx wrangler deploy`: the plain Next.js build does not produce `.open-next/worker.js`.
+
+For local use:
+
+```sh
+npm run build:cloudflare  # Next.js + Cloudflare Worker bundle
+npm run deploy:check     # Wrangler dry run; does not publish
+npm run preview          # build and preview in the Workers runtime
+npm run deploy           # build and deploy (requires Cloudflare authentication)
+```
+
+Alternatively, the pasted dashboard combination `npm run build` / `npm run deploy` works, but builds Next.js twice. The settings above avoid that duplication.
+
+The `ASSETS`, `WORKER_SELF_REFERENCE` and `IMAGES` bindings are configured. `IMAGES` enables `next/image` optimization through Cloudflare Images and follows Cloudflare's Images availability and billing. No R2 bucket or application secrets are required for the current pre-rendered invitation. Configure an external cache only if future features require persistent ISR or revalidation. Keep the self-reference service name in sync when renaming the Worker.
+
+The invitation remains at `/invite/amritpal-akamdeep`; unknown slugs return 404. A future invitation registry can select a typed config by slug without changing scene components. Vercel and Node hosting remain supported through `npm run build` / `npm start`.
 
 Page metadata uses the wedding configuration. Indexing is disabled for this personal invitation; change `robots` in `src/app/layout.tsx` if wanted. Set a production `metadataBase` and social preview image when a public domain is chosen. Font downloads require access to Google Fonts during builds; deployed pages serve the generated font files locally.
 
